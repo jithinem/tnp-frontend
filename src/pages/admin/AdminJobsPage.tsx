@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store/store';
 import { createJob, deleteJob, fetchJobById, fetchJobs, updateJob } from '../../features/jobs/jobsSlice';
 import { fetchApplications } from '../../features/applications/applicationsSlice';
-import { Job } from '../../types';
+import { fetchCategories } from '../../features/jobs/categoriesSlice';
+import { Application, Job } from '../../types';
 import { routes } from '../../constants/routes';
 import { LoaderSpinner } from '../../components/LoaderSpinner';
 import { Table, Column } from '../../components/Table';
@@ -16,6 +17,10 @@ export function AdminJobsPage() {
   const deleting = useSelector((state: RootState) => state.jobs.deleting);
   const error = useSelector((state: RootState) => state.jobs.error);
   const submittingError = useSelector((state: RootState) => state.jobs.submittingError);
+  const categories = useSelector((state: RootState) => state.categories.list);
+  const applications = useSelector((state: RootState) => state.applications.list);
+  const applicationsLoading = useSelector((state: RootState) => state.applications.loading);
+  const applicationsError = useSelector((state: RootState) => state.applications.error);
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -45,13 +50,21 @@ export function AdminJobsPage() {
     { key: 'is_featured', header: 'Featured', render: (job) => job.is_featured ? 'Yes' : 'No' },
     { key: 'is_active', header: 'Status', render: (job) => <span className="badge success">{job.is_active ? 'Active' : 'Inactive'}</span> },
     { key: 'actions', header: 'Actions', render: (job) => (
-      <>
+      <div className="table-actions">
         <button className="button small" onClick={() => openViewApplicants(job)}>View Applicants</button>
         <button className="button small" onClick={() => openDetails(job)}>Details</button>
         <button className="button small" onClick={() => openEdit(job)}>Edit</button>
         <button className="button button-danger small" disabled={deleting} onClick={() => openDelete(job.id)}>Delete</button>
-      </>
+      </div>
     )},
+  ];
+
+  const applicantColumns: Column<Application>[] = [
+    { key: 'applicant', header: 'Applicant', render: (application) => `${application.user?.first_name || ''} ${application.user?.last_name || ''}`.trim() || application.user_id || '—' },
+    { key: 'email', header: 'Email', render: (application) => application.user?.email || '—' },
+    { key: 'status', header: 'Status', render: (application) => application.status },
+    { key: 'applied_at', header: 'Applied', render: (application) => application.applied_at || application.created_at || '—' },
+    { key: 'resume', header: 'Resume', render: (application) => application.resume_url ? <a href={application.resume_url} target="_blank" rel="noreferrer">View Resume</a> : '—' },
   ];
 
   const activeFilters = useMemo(() => {
@@ -71,6 +84,10 @@ export function AdminJobsPage() {
     dispatch(fetchJobs(activeFilters));
   }, [dispatch, activeFilters]);
 
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
   function openCreate() {
     setEditingId(null);
     setCurrent({
@@ -82,7 +99,7 @@ export function AdminJobsPage() {
       salary_min: '',
       salary_max: '',
       experience_level: 'Entry',
-      category_id: 1,
+      category_id: categories[0]?.id,
       employment_type: 'full-time',
       is_featured: false,
       is_active: true,
@@ -139,7 +156,7 @@ export function AdminJobsPage() {
           <input value={filters.search} placeholder="Search title/company" onChange={(e) => { setPage(1); setFilters({ ...filters, search: e.target.value }); }} />
           <select value={filters.category_id} onChange={(e) => { setPage(1); setFilters({ ...filters, category_id: e.target.value }); }}>
             <option value="">All Categories</option>
-            <option value="1">Category 1</option>
+            {categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}
           </select>
           <select value={filters.is_active} onChange={(e) => { setPage(1); setFilters({ ...filters, is_active: e.target.value }); }}>
             <option value="">All Status</option>
@@ -199,7 +216,10 @@ export function AdminJobsPage() {
                 <label>Location<input required value={current.location ?? ''} onChange={(e) => setCurrent({ ...current, location: e.target.value })} /></label>
                 <label>Employment Type<select value={current.employment_type ?? 'full-time'} onChange={(e) => setCurrent({ ...current, employment_type: e.target.value })}><option>full-time</option><option>part-time</option><option>contract</option><option>internship</option></select></label>
                 <label>Experience<select value={current.experience_level ?? 'Entry'} onChange={(e) => setCurrent({ ...current, experience_level: e.target.value })}><option>Entry</option><option>Mid</option><option>Senior</option><option>Lead</option></select></label>
-                <label>Category ID<input type="number" required value={current.category_id ?? 1} onChange={(e) => setCurrent({ ...current, category_id: Number(e.target.value) })} /></label>
+                <label>Category<select required value={String(current.category_id ?? '')} onChange={(e) => setCurrent({ ...current, category_id: Number(e.target.value) })}>
+                  <option value="" disabled>Select a category</option>
+                  {categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}
+                </select></label>
                 <label>Status<select value={String(current.is_active ?? true)} onChange={(e) => setCurrent({ ...current, is_active: e.target.value === 'true' })}><option value="true">Active</option><option value="false">Inactive</option></select></label>
                 <label>Featured<select value={String(current.is_featured ?? false)} onChange={(e) => setCurrent({ ...current, is_featured: e.target.value === 'true' })}><option value="true">Featured</option><option value="false">Not Featured</option></select></label>
                 <label>Description<textarea required value={current.description ?? ''} onChange={(e) => setCurrent({ ...current, description: e.target.value })} /></label>
@@ -226,6 +246,7 @@ export function AdminJobsPage() {
                 <div><strong>Location:</strong> {current.location}</div>
                 <div><strong>Type:</strong> {current.employment_type}</div>
                 <div><strong>Experience:</strong> {current.experience_level}</div>
+                <div><strong>Category:</strong> {current.category?.name || categories.find((category) => category.id === current.category_id)?.name || '—'}</div>
                 <div><strong>Featured:</strong> {current.is_featured ? 'Yes' : 'No'}</div>
                 <div><strong>Status:</strong> {current.is_active ? 'Active' : 'Inactive'}</div>
                 <div><strong>Description:</strong> {current.description}</div>
@@ -234,6 +255,27 @@ export function AdminJobsPage() {
               </div>
               <div className="modal-actions">
                 <button className="button button-secondary" onClick={() => setShowDetails(false)}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showApplicants && selectedJob && (
+          <div className="modal-backdrop">
+            <div className="modal">
+              <button className="modal-close" aria-label="Close modal" onClick={() => setShowApplicants(false)}>×</button>
+              <div className="modal-title">Applicants for {selectedJob.title}</div>
+              {applicationsError && <div className="error">{applicationsError}</div>}
+              {applicationsLoading ? <LoaderSpinner text="Loading applicants..." /> : (
+                <Table
+                  columns={applicantColumns}
+                  data={applications}
+                  emptyMessage="No applicants found"
+                  keyExtractor={(application) => application.id}
+                />
+              )}
+              <div className="modal-actions">
+                <button className="button button-secondary" onClick={() => setShowApplicants(false)}>Close</button>
               </div>
             </div>
           </div>

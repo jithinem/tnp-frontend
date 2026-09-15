@@ -37,10 +37,10 @@ export function AdminUsersPage() {
     { key: 'status', header: 'Status', render: (user) => <span className="badge success">{user.is_active ? 'Active' : 'Inactive'}</span> },
     { key: 'created_at', header: 'Created', render: (user) => user.created_at || '—' },
     { key: 'actions', header: 'Actions', render: (user) => (
-      <>
+      <div className="table-actions">
         <button className="button small" onClick={() => openEdit(user)}>Edit</button>
         <button className="button button-danger small" disabled={submitting} onClick={() => openDelete(user.id ?? 0)}>Delete</button>
-      </>
+      </div>
     )},
   ];
 
@@ -128,7 +128,7 @@ export function AdminUsersPage() {
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
-          <button className="button button-primary" onClick={openCreate}>Create User</button>
+          {/* <button className="button button-primary" onClick={openCreate}>Create User</button> */}
         </div>
 
         {error && <div className="error">{error}</div>}
@@ -138,7 +138,7 @@ export function AdminUsersPage() {
             columns={userColumns}
             data={users}
             emptyMessage="No users found"
-            keyExtractor={(user) => user.id}
+            keyExtractor={(user) => user.id ?? user.email}
           />
         )}
 

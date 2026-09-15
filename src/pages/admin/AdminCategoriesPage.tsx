@@ -20,11 +20,11 @@ export function AdminCategoriesPage() {
     { key: 'name', header: 'Name', render: (category) => category.name },
     { key: 'slug', header: 'Slug', render: (category) => category.slug || '—' },
     { key: 'actions', header: 'Actions', render: (category) => (
-      <>
+      <div className="table-actions">
         <button className="button small" onClick={() => viewDetails(category)}>Details</button>
         <button className="button small" onClick={() => { setEditing(category); setName(category.name); }}>Edit</button>
         <button className="button button-danger small" disabled={submitting} onClick={() => setDeleteTarget(category)}>Delete</button>
-      </>
+      </div>
     )},
   ];
 

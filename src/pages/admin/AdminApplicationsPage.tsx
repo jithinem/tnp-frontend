@@ -63,11 +63,11 @@ export function AdminApplicationsPage() {
     { key: 'status', header: 'Status', render: (app) => app.status },
     { key: 'applied', header: 'Applied', render: (app) => app.created_at || app.applied_at || '—' },
     { key: 'actions', header: 'Actions', render: (app) => (
-      <>
+      <div className="table-actions">
         <button className="button small" onClick={() => navigate(`/applications/${app.id}`)}>Details</button>
         <button className="button small" onClick={() => openEdit(app)}>Edit</button>
         <button className="button button-danger small" disabled={submitting} onClick={() => openDelete(app.id)}>Delete</button>
-      </>
+      </div>
     )},
   ];
 

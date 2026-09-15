@@ -45,7 +45,7 @@ export function ApplicationsPage() {
     { key: 'job', header: 'Job', render: (app) => app.job?.title || app.job_id },
     { key: 'status', header: 'Status', render: (app) => <span className="badge success">{app.status}</span> },
     { key: 'applied', header: 'Applied', render: (app) => app.applied_at || app.created_at || '—' },
-    { key: 'actions', header: '', render: (app) => <Link className="button small" to={`/applications/${app.id}`}>View</Link> },
+    { key: 'actions', header: '', render: (app) => <div className="table-actions"><Link className="button small" to={`/applications/${app.id}`}>View</Link></div> },
   ];
 
   useEffect(() => {

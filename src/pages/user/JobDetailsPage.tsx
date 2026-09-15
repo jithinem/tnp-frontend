@@ -36,7 +36,7 @@ export function JobDetailsPage() {
               <h3>Requirements</h3>
               <p>{job.requirements}</p>
               <div className="job-meta">Salary {job.salary_min} - {job.salary_max}</div>
-              <div className="job-meta">Category {job.category?.name}</div>
+              <div className="job-meta">Category: {job.category?.name || '—'}</div>
             </div>
             {user?.role !== 'admin' && (
               <div className="form">
